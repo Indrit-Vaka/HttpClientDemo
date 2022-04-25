@@ -1,0 +1,62 @@
+﻿@page "/wather"
+@inject IHttpClientFactory _clientFactory
+<h3>Wether Data</h3>
+
+@if (string.IsNullOrWhiteSpace(errorMessage) == false)
+{
+    <div class="h2 blazor-error-boundary">@errorMessage</div>
+}
+else if (forecast == null)
+{
+    <div class="h4" >Loading...</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th>Date</th>
+            <th>Wather State</th>
+            <th>Low</th>
+            <th>High</th>
+        </tr>    
+        </thead>
+        <tbody>
+            @foreach (var w in forecast.ConsolidatedWeather)
+            {
+                <tr>
+                    <td>@w.ApplicableDate</td>
+                    <td>@w.WeatherStateName</td>
+                    <td>@w.MinTemp</td>
+                    <td>@w.MaxTemp</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    WatherForecastModel? forecast;
+    string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get,
+        "location/44418/");
+        var client = _clientFactory.CreateClient("meta");
+
+        HttpResponseMessage httpResponse = await client.SendAsync(request);
+
+        if (httpResponse.IsSuccessStatusCode)
+        {
+            forecast = await httpResponse.Content.ReadFromJsonAsync<WatherForecastModel>();
+            errorMessage = null;
+        }
+        else
+        {
+            errorMessage = $"There was an error while getting data: {httpResponse.ReasonPhrase}";
+        }
+    }
+
+}
